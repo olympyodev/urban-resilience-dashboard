@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, Droplets, Mountain } from 'lucide-react';
@@ -46,29 +45,17 @@ const Map: React.FC<MapProps> = ({ activeLayers, alertLevel }) => {
   };
 
   const handleZoneClick = (zone: any, type: 'flood' | 'landslide') => {
-    console.log('Zone clicked:', zone, 'Type:', type, 'Alert Level:', alertLevel, 'Simulated Alert:', simulatedAlert);
-    
-    // Sempre navegar para detalhes se houver um alerta ativo OU se for uma zona de alto risco
-    const shouldNavigate = alertLevel === 'alert' || simulatedAlert || zone.severity === 'high';
-    console.log('Should navigate:', shouldNavigate);
-    
-    if (shouldNavigate) {
+    // Navegar para detalhes do alerta se for uma zona de alto risco ou houver alerta ativo
+    if (zone.severity === 'high' || simulatedAlert) {
       const alertId = type === 'flood' ? `flood-${zone.id}` : `landslide-${zone.id}`;
-      console.log('Navigating to:', `/alert/${alertId}`);
       navigate(`/alert/${alertId}`);
-    } else {
-      console.log('Navigation blocked - conditions not met');
     }
   };
 
   useEffect(() => {
-    console.log('Alert level changed:', alertLevel);
     if (alertLevel === 'alert') {
       setSimulatedAlert(true);
-      const timer = setTimeout(() => {
-        console.log('Resetting simulated alert');
-        setSimulatedAlert(false);
-      }, 3000);
+      const timer = setTimeout(() => setSimulatedAlert(false), 3000);
       return () => clearTimeout(timer);
     }
   }, [alertLevel]);
@@ -93,17 +80,17 @@ const Map: React.FC<MapProps> = ({ activeLayers, alertLevel }) => {
         {activeLayers.includes('inundacao') && floodZones.map(zone => (
           <div
             key={`flood-${zone.id}`}
-            className={`absolute w-20 h-16 rounded-full transition-all duration-300 cursor-pointer hover:opacity-80 hover:scale-105 ${
-              (simulatedAlert || alertLevel === 'alert') && zone.severity === 'high' ? 'animate-pulse' : ''
+            className={`absolute w-20 h-16 rounded-full transition-all duration-300 cursor-pointer hover:opacity-80 ${
+              simulatedAlert && zone.severity === 'high' ? 'animate-pulse' : ''
             }`}
             style={{
               left: `${zone.x}%`,
               top: `${zone.y}%`,
-              backgroundColor: getZoneColor(zone.severity, (simulatedAlert || alertLevel === 'alert') && zone.severity === 'high'),
-              border: (simulatedAlert || alertLevel === 'alert') && zone.severity === 'high' ? '3px solid #dc2626' : '2px solid rgba(255,255,255,0.3)',
+              backgroundColor: getZoneColor(zone.severity, simulatedAlert && zone.severity === 'high'),
+              border: simulatedAlert && zone.severity === 'high' ? '3px solid #dc2626' : 'none',
             }}
             onClick={() => handleZoneClick(zone, 'flood')}
-            title={`Clique para ver detalhes de ${zone.name} - Severidade: ${zone.severity}`}
+            title={`Clique para ver detalhes de ${zone.name}`}
           >
             <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-700">
               <Droplets className="h-3 w-3 mx-auto" />
@@ -116,17 +103,17 @@ const Map: React.FC<MapProps> = ({ activeLayers, alertLevel }) => {
         {activeLayers.includes('deslizamento') && landslideZones.map(zone => (
           <div
             key={`landslide-${zone.id}`}
-            className={`absolute w-16 h-20 rounded-lg transition-all duration-300 cursor-pointer hover:opacity-80 hover:scale-105 ${
-              (simulatedAlert || alertLevel === 'alert') && zone.severity === 'high' ? 'animate-pulse' : ''
+            className={`absolute w-16 h-20 rounded-lg transition-all duration-300 cursor-pointer hover:opacity-80 ${
+              simulatedAlert && zone.severity === 'high' ? 'animate-pulse' : ''
             }`}
             style={{
               left: `${zone.x}%`,
               top: `${zone.y}%`,
-              backgroundColor: getZoneColor(zone.severity, (simulatedAlert || alertLevel === 'alert') && zone.severity === 'high'),
-              border: (simulatedAlert || alertLevel === 'alert') && zone.severity === 'high' ? '3px solid #dc2626' : '2px solid rgba(255,255,255,0.3)',
+              backgroundColor: getZoneColor(zone.severity, simulatedAlert && zone.severity === 'high'),
+              border: simulatedAlert && zone.severity === 'high' ? '3px solid #dc2626' : 'none',
             }}
             onClick={() => handleZoneClick(zone, 'landslide')}
-            title={`Clique para ver detalhes de ${zone.name} - Severidade: ${zone.severity}`}
+            title={`Clique para ver detalhes de ${zone.name}`}
           >
             <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-700">
               <Mountain className="h-3 w-3 mx-auto" />
@@ -187,7 +174,7 @@ const Map: React.FC<MapProps> = ({ activeLayers, alertLevel }) => {
       </div>
 
       {/* Alert overlay */}
-      {(simulatedAlert || alertLevel === 'alert') && (
+      {simulatedAlert && (
         <div className="absolute inset-0 bg-red-500/20 animate-pulse flex items-center justify-center">
           <div className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
             <AlertTriangle className="h-5 w-5" />
